@@ -1,0 +1,43 @@
+// cl.haus LLM Proxy — Model Provider for OpenClaw
+//
+// Add this to your openclaw.json under "models.providers".
+// Replace <YOUR_HOME_ID> and <YOUR_API_KEY> with your cl.haus credentials.
+//
+// This routes LLM calls through cl.haus's metered proxy.
+// Token usage is tracked per-home for billing.
+// The model aliases (claus-pro, claus-medium, claus-cheap) resolve
+// to real backend models on the server side — you never need to
+// know or configure which Anthropic model is behind them.
+{
+  "claus": {
+    "baseUrl": "https://cl.haus/api/homes/<YOUR_HOME_ID>/llm",
+    "apiKey": "<YOUR_API_KEY>",
+    "api": "anthropic-messages",
+    "models": [
+      {
+        "id": "claus-pro",
+        "name": "Claus Pro",
+        "reasoning": true,
+        "input": ["text", "image"],
+        "contextWindow": 200000,
+        "maxTokens": 8192
+      },
+      {
+        "id": "claus-medium",
+        "name": "Claus Medium",
+        "reasoning": true,
+        "input": ["text", "image"],
+        "contextWindow": 200000,
+        "maxTokens": 8192
+      },
+      {
+        "id": "claus-cheap",
+        "name": "Claus Cheap",
+        "reasoning": false,
+        "input": ["text", "image"],
+        "contextWindow": 200000,
+        "maxTokens": 8192
+      }
+    ]
+  }
+}

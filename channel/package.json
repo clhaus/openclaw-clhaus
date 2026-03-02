@@ -1,0 +1,35 @@
+{
+  "name": "@clhaus/openclaw-channel-clhaus",
+  "version": "0.1.0",
+  "description": "OpenClaw channel plugin for cl.haus — chat with your house",
+  "type": "module",
+  "main": "index.ts",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/clhaus/openclaw-channel-clhaus.git"
+  },
+  "openclaw": {
+    "extensions": ["./index.ts"],
+    "channel": {
+      "id": "clhaus",
+      "label": "Claus",
+      "selectionLabel": "Claus (cl.haus)",
+      "docsPath": "/channels/clhaus",
+      "docsLabel": "clhaus",
+      "blurb": "Chat with your house through cl.haus.",
+      "order": 90,
+      "aliases": ["claus"]
+    },
+    "install": {
+      "npmSpec": "@clhaus/openclaw-channel-clhaus",
+      "defaultChoice": "npm"
+    }
+  },
+  "dependencies": {
+    "ws": "^8.0.0"
+  },
+  "peerDependencies": {
+    "openclaw": "*"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "@clhaus/skill",
+  "version": "0.0.1",
+  "private": true,
+  "description": "OpenClaw skill for interacting with cl.haus API"
+}
