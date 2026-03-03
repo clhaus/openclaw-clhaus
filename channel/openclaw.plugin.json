@@ -1,0 +1,11 @@
+{
+  "id": "clhaus",
+  "name": "Claus",
+  "description": "cl.haus channel plugin — chat with your house through OpenClaw",
+  "channels": ["clhaus"],
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}
