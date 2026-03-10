@@ -5,37 +5,42 @@
 //
 // This routes LLM calls through cl.haus's metered proxy.
 // Token usage is tracked per-home for billing.
-// The model aliases (claus-pro, claus-medium, claus-cheap) resolve
+// The model aliases (claus-standard, claus-lite, claus-micro) resolve
 // to real backend models on the server side — you never need to
-// know or configure which Anthropic model is behind them.
+// know or configure which provider model is behind them.
+//
+// IMPORTANT:
+// - "api" must be "openai-completions" (NOT "anthropic-messages" or "openai")
+// - "baseUrl" must end with /llm/v1 (OpenClaw appends /chat/completions)
+// - "models.mode" should be "merge" to keep any existing providers
 {
   "claus": {
-    "baseUrl": "https://cl.haus/api/homes/<YOUR_HOME_ID>/llm",
+    "baseUrl": "https://cl.haus/api/homes/<YOUR_HOME_ID>/llm/v1",
     "apiKey": "<YOUR_API_KEY>",
-    "api": "anthropic-messages",
+    "api": "openai-completions",
     "models": [
       {
-        "id": "claus-pro",
-        "name": "Claus Pro",
-        "reasoning": true,
-        "input": ["text", "image"],
-        "contextWindow": 200000,
+        "id": "claus-standard",
+        "name": "Claus Standard",
+        "reasoning": false,
+        "input": ["text"],
+        "contextWindow": 128000,
         "maxTokens": 8192
       },
       {
-        "id": "claus-medium",
-        "name": "Claus Medium",
-        "reasoning": true,
-        "input": ["text", "image"],
-        "contextWindow": 200000,
-        "maxTokens": 8192
-      },
-      {
-        "id": "claus-cheap",
-        "name": "Claus Cheap",
+        "id": "claus-lite",
+        "name": "Claus Lite",
         "reasoning": false,
         "input": ["text", "image"],
-        "contextWindow": 200000,
+        "contextWindow": 128000,
+        "maxTokens": 8192
+      },
+      {
+        "id": "claus-micro",
+        "name": "Claus Micro",
+        "reasoning": false,
+        "input": ["text"],
+        "contextWindow": 128000,
         "maxTokens": 8192
       }
     ]

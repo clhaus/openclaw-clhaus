@@ -132,7 +132,7 @@ Without this, OpenClaw will keep running stale compiled code.
 | `Claus: OFF` in status | Check `openclaw.json` has both `plugins.load.paths` and `channels.clhaus` |
 | Plugin changes not taking effect | `rm -rf /tmp/jiti/` then restart |
 | "house offline" in PWA | Gateway not running or WS auth failed — check API key |
-| Plugin ID mismatch warning | Cosmetic, ignore |
+| Auto-restart loop (connecting/replaced cycle) | Ensure channel plugin version has the `startAccount` abort-signal fix |
 | ws module not found | Run `./setup.sh` or manually symlink (see above) |
 
 ## Architecture
