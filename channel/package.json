@@ -1,5 +1,5 @@
 {
-  "name": "@clhaus/openclaw-channel-clhaus",
+  "name": "@clhaus/clhaus",
   "version": "0.1.0",
   "description": "OpenClaw channel plugin for cl.haus — chat with your house",
   "type": "module",
@@ -22,7 +22,7 @@
       "aliases": ["claus"]
     },
     "install": {
-      "npmSpec": "@clhaus/openclaw-channel-clhaus",
+      "npmSpec": "@clhaus/clhaus",
       "defaultChoice": "npm"
     }
   },

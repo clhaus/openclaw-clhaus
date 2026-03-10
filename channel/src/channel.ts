@@ -114,14 +114,21 @@ export const clhausPlugin: ChannelPlugin<ResolvedClhausAccount> = {
         },
       });
 
-      return () => {
-        stopConnection();
-        ctx.setStatus({
-          accountId: account.accountId,
-          running: false,
-          lastStopAt: Date.now(),
-        });
-      };
+      // Park the promise until the gateway signals abort.
+      // OpenClaw treats startAccount() resolving as "channel stopped" and
+      // triggers auto-restart. We must stay pending for the channel's lifetime.
+      // See: OpenClaw LINE #26528, Google Chat #27384, Nextcloud Talk #27897
+      await new Promise<void>((resolve) => {
+        if (ctx.abortSignal.aborted) { resolve(); return; }
+        ctx.abortSignal.addEventListener("abort", () => resolve(), { once: true });
+      });
+
+      stopConnection();
+      ctx.setStatus({
+        accountId: account.accountId,
+        running: false,
+        lastStopAt: Date.now(),
+      });
     },
   },
 };
