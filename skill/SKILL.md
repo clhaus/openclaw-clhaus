@@ -1,3 +1,8 @@
+---
+name: clhaus
+description: "Manage home data on cl.haus — add rooms, systems, photos, consumables, and service records. Use when the user asks to add, list, update, or delete rooms, systems, equipment, photos, or maintenance records for their home."
+---
+
 # cl.haus API Skill
 
 Interact with the cl.haus home management API.
