@@ -9,11 +9,16 @@ Control the local Home Assistant instance via its REST API.
 
 ## Authentication
 
-All API requests require a long-lived access token:
-- `HA_TOKEN` — long-lived access token (set by install-ha.sh or configure-ha.sh)
-- `HA_URL` — base URL (default: `http://localhost:8123`)
+All API requests require a long-lived access token. The parent clhaus installer sets
+this automatically; to configure manually, either:
 
-Token file fallback: `/home/openclaw/.config/ha/token`
+1. Export the env var: `export HA_TOKEN="<your-token>"`
+2. Write the token to a file: `${XDG_CONFIG_HOME:-$HOME/.config}/ha/token`
+
+The script checks `HA_TOKEN` first, then falls back to the token file.
+
+Optionally set the base URL (default: `http://localhost:8123`):
+- `export HA_URL="http://<your-ha-host>:8123"`
 
 ## How to Run Commands
 
@@ -89,7 +94,8 @@ These are the underlying HA REST API endpoints:
   - Body: `{"entity_id": "light.living_room", ...extra_data}`
 
 ### Config
-- `GET /api/config` — HA config (areas, location, units, etc.)
+- `GET /api/config` — HA config (location, units, etc.)
+- `POST /api/config/area_registry/list` — list configured areas
 
 ### Health
 - `GET /api/` — API status check (returns `{"message": "API running."}`)

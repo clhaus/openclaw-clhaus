@@ -11,10 +11,18 @@ OpenClaw skill for controlling Home Assistant smart home devices via the HA REST
    cp -r /tmp/openclaw-clhaus/ha-skill ~/.openclaw/skills/ha
    ```
 
-2. Set required environment variables (set automatically by `install-ha.sh` or `configure-ha.sh`):
+2. Configure your HA access token (set automatically by the parent clhaus installer).
+   To set up manually, either export the env var or write the token to a file:
    ```bash
+   # Option 1: env var
    export HA_TOKEN="your-long-lived-access-token"
-   export HA_URL="http://localhost:8123"  # optional, defaults to localhost
+
+   # Option 2: token file
+   mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}/ha"
+   echo "your-long-lived-access-token" > "${XDG_CONFIG_HOME:-$HOME/.config}/ha/token"
+
+   # Optional: override the default HA URL (http://localhost:8123)
+   export HA_URL="http://your-ha-host:8123"
    ```
 
 3. Restart OpenClaw to load the skill.

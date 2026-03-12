@@ -6,7 +6,7 @@
 #   HA_TOKEN  — long-lived access token (required)
 #   HA_URL    — base URL (default: http://localhost:8123)
 #
-# Token file fallback: /home/openclaw/.config/ha/token
+# Token file fallback: ${XDG_CONFIG_HOME:-$HOME/.config}/ha/token
 
 set -euo pipefail
 
@@ -14,7 +14,7 @@ set -euo pipefail
 
 # Load token from file if env var not set
 if [[ -z "${HA_TOKEN:-}" ]]; then
-  TOKEN_FILE="/home/openclaw/.config/ha/token"
+  TOKEN_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/ha/token"
   if [[ -f "$TOKEN_FILE" ]]; then
     HA_TOKEN=$(cat "$TOKEN_FILE")
   fi
@@ -22,7 +22,7 @@ fi
 
 _ha_check() {
   if [[ -z "${HA_TOKEN:-}" ]]; then
-    echo '{"error": "HA_TOKEN not set. Run configure-ha.sh --token <token> or export HA_TOKEN."}' >&2
+    echo '{"error": "HA_TOKEN not set. Export HA_TOKEN or write your token to '"${XDG_CONFIG_HOME:-\$HOME/.config}"'/ha/token."}' >&2
     return 1
   fi
 }
@@ -78,7 +78,7 @@ ha() {
       local extra="${4:-}"
       local body
       if [[ -n "$extra" ]]; then
-        body=$(echo "$extra" | jq --arg eid "$entity" '. + {entity_id: $eid}')
+        body=$(printf '%s' "$extra" | jq --arg eid "$entity" '. + {entity_id: $eid}')
       else
         body=$(jq -n --arg eid "$entity" '{entity_id: $eid}')
       fi
@@ -87,7 +87,7 @@ ha() {
 
     list-areas)
       _ha_check || return 1
-      _ha_curl "${HA_URL}/api/config" | jq '.area_registry // empty'
+      _ha_curl -X POST "${HA_URL}/api/config/area_registry/list" | jq .
       ;;
 
     states)
