@@ -1,0 +1,6 @@
+{
+  "name": "@clhaus/ha-skill",
+  "version": "0.0.1",
+  "private": true,
+  "description": "OpenClaw skill for controlling Home Assistant smart home devices"
+}
