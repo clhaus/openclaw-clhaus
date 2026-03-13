@@ -3,8 +3,12 @@
  * Replaces the webhook-based inbound transport.
  */
 import WebSocket from "ws";
+import { writeFile, mkdir } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import path from "node:path";
 import {
   createReplyPrefixOptions,
+  loadWebMedia,
 } from "openclaw/plugin-sdk";
 import { getClhausRuntime } from "./runtime.js";
 import { resolveClhausAccount, isClhausConfigured } from "./config.js";
@@ -269,24 +273,48 @@ async function handleChatMessage(
     body: event.content,
   });
 
-  // Build agent-visible body with home context and attachment info
+  // Download image attachments and save to local temp files.
+  // Pre-signed S3 URLs expire quickly, so we fetch immediately while they're fresh.
+  // We save to disk and pass file paths — OpenClaw's pipeline reads local files,
+  // creates [media attached: /path (type)] tags, and detectAndLoadPromptImages()
+  // loads them as image_url content blocks for the LLM (same as Telegram channel).
+  const mediaPaths: string[] = [];
+  const mediaTypes: string[] = [];
+  if (event.attachments?.length) {
+    const mediaDir = "/tmp/openclaw/clhaus-inbound";
+    await mkdir(mediaDir, { recursive: true });
+    const results = await Promise.allSettled(
+      event.attachments
+        .filter(a => a.url && a.mimeType?.startsWith("image/"))
+        .map(async (att) => {
+          const media = await loadWebMedia(att.url, 5 * 1024 * 1024);
+          const ct = media.contentType || att.mimeType;
+          const ext = ct.split("/")[1]?.split(";")[0] || "jpg";
+          const filePath = path.join(mediaDir, `${randomUUID()}.${ext}`);
+          await writeFile(filePath, Buffer.from(media.buffer));
+          return { path: filePath, contentType: ct };
+        }),
+    );
+    for (const r of results) {
+      if (r.status === "fulfilled") {
+        mediaPaths.push(r.value.path);
+        mediaTypes.push(r.value.contentType);
+      } else {
+        console.error(`[clhaus] failed downloading attachment: ${r.reason}`);
+      }
+    }
+    if (mediaPaths.length > 0) {
+      console.log(`[clhaus] saved ${mediaPaths.length} attachment(s) to disk: ${mediaPaths.join(", ")}`);
+    }
+  }
+
+  // Build agent-visible body with home context — don't add manual image text,
+  // OpenClaw's buildInboundMediaNote() handles the [media attached: ...] tags.
   const parts: string[] = [];
   if (homeContext) parts.push(homeContext);
   parts.push(`[From: ${senderName}]`);
   parts.push(event.content);
-  if (event.attachments?.length) {
-    for (const att of event.attachments) {
-      parts.push(`[Attached image: ${att.originalFilename} (${att.mimeType}) — ${att.url}]`);
-    }
-  }
   const agentBody = parts.join("\n\n");
-
-  // Extract media URLs and types from attachments for OpenClaw's media pipeline
-  const mediaUrls = event.attachments?.filter(a => a.url).map(a => a.url) ?? [];
-  const mediaTypes = event.attachments?.filter(a => a.url).map(a => a.mimeType) ?? [];
-  if (mediaUrls.length > 0) {
-    console.log(`[clhaus] passing ${mediaUrls.length} media attachment(s) to OpenClaw: types=${mediaTypes.join(",")}`);
-  }
 
   const ctxPayload = core.channel.reply.finalizeInboundContext({
     Body: body,
@@ -307,8 +335,14 @@ async function handleChatMessage(
     MessageSid: `${event.conversationId}:${Date.now()}`,
     OriginatingChannel: "clhaus",
     OriginatingTo: `clhaus:${event.homeId}`,
-    // Pass media through OpenClaw's standard attachment pipeline
-    ...(mediaUrls.length > 0 ? { MediaUrls: mediaUrls, MediaTypes: mediaTypes } : {}),
+    ...(mediaPaths.length > 0 ? {
+      MediaPath: mediaPaths[0],
+      MediaType: mediaTypes[0],
+      MediaUrl: mediaPaths[0],
+      MediaPaths: mediaPaths,
+      MediaUrls: mediaPaths,
+      MediaTypes: mediaTypes,
+    } : {}),
   });
 
   // Record session metadata

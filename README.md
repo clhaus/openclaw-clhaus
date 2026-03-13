@@ -140,7 +140,7 @@ Without this, OpenClaw will keep running stale compiled code.
 - **Channel plugin** connects outbound via WebSocket — no public URL needed
 - **Per-user sessions** — each household member gets isolated conversation history
 - **Home context injection** — agent receives room/system/member info with each message (cached 5min)
-- **Image attachments** — photos from PWA are passed through OpenClaw's media pipeline
+- **Image vision** — photos from PWA are downloaded, saved to disk, and passed as `MediaPaths` through OpenClaw's native image pipeline (`detectAndLoadPromptImages`), delivered to vision-capable LLMs as `image_url` content blocks
 
 ## Links
 
