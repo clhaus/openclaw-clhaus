@@ -25,44 +25,44 @@ Optionally set the base URL (default: `http://localhost:8123`):
 Execute the helper script using its full path relative to this skill directory:
 
 ```bash
-bash scripts/ha-api.sh <command> [args...]
+bash scripts/ha.sh <command> [args...]
 ```
 
-**Important:** Always use `bash scripts/ha-api.sh`, not just `ha`. The script path is relative to this skill's directory.
+**Important:** Always use `bash scripts/ha.sh`, not just `ha`. The script path is relative to this skill's directory.
 
 ### List entities
 ```bash
-bash scripts/ha-api.sh list-entities              # all entities
-bash scripts/ha-api.sh list-entities light        # only lights
-bash scripts/ha-api.sh list-entities sensor       # only sensors
-bash scripts/ha-api.sh list-entities switch       # only switches
+bash scripts/ha.sh list-entities              # all entities
+bash scripts/ha.sh list-entities light        # only lights
+bash scripts/ha.sh list-entities sensor       # only sensors
+bash scripts/ha.sh list-entities switch       # only switches
 ```
 
 ### Get entity state
 ```bash
-bash scripts/ha-api.sh get-state light.living_room
-bash scripts/ha-api.sh get-state sensor.temperature
-bash scripts/ha-api.sh get-state switch.fan
+bash scripts/ha.sh get-state light.living_room
+bash scripts/ha.sh get-state sensor.temperature
+bash scripts/ha.sh get-state switch.fan
 ```
 
 ### Call a service
 ```bash
-bash scripts/ha-api.sh call-service light turn_on light.living_room
-bash scripts/ha-api.sh call-service light turn_off light.living_room
-bash scripts/ha-api.sh call-service light turn_on light.living_room '{"brightness": 128, "color_name": "blue"}'
-bash scripts/ha-api.sh call-service switch toggle switch.fan
-bash scripts/ha-api.sh call-service climate set_temperature climate.thermostat '{"temperature": 72}'
-bash scripts/ha-api.sh call-service automation trigger automation.morning_routine
+bash scripts/ha.sh call-service light turn_on light.living_room
+bash scripts/ha.sh call-service light turn_off light.living_room
+bash scripts/ha.sh call-service light turn_on light.living_room '{"brightness": 128, "color_name": "blue"}'
+bash scripts/ha.sh call-service switch toggle switch.fan
+bash scripts/ha.sh call-service climate set_temperature climate.thermostat '{"temperature": 72}'
+bash scripts/ha.sh call-service automation trigger automation.morning_routine
 ```
 
 ### List areas
 ```bash
-bash scripts/ha-api.sh list-areas
+bash scripts/ha.sh list-areas
 ```
 
 ### Full state dump
 ```bash
-bash scripts/ha-api.sh states
+bash scripts/ha.sh states
 ```
 
 ## Common Entity Domains
@@ -104,20 +104,20 @@ These are the underlying HA REST API endpoints:
 
 ### Turn on a light
 ```bash
-bash scripts/ha-api.sh call-service light turn_on light.living_room
+bash scripts/ha.sh call-service light turn_on light.living_room
 ```
 
 ### Set thermostat
 ```bash
-bash scripts/ha-api.sh call-service climate set_temperature climate.thermostat '{"temperature": 72}'
+bash scripts/ha.sh call-service climate set_temperature climate.thermostat '{"temperature": 72}'
 ```
 
 ### Check all sensors
 ```bash
-bash scripts/ha-api.sh list-entities sensor
+bash scripts/ha.sh list-entities sensor
 ```
 
 ### Find devices in a room
 ```bash
-bash scripts/ha-api.sh list-entities | grep kitchen
+bash scripts/ha.sh list-entities | grep kitchen
 ```
