@@ -1,111 +1,157 @@
 ---
 name: clhaus
-description: "Manage home data on cl.haus — add rooms, systems, photos, consumables, and service records. Use when the user asks to add, list, update, or delete rooms, systems, equipment, photos, or maintenance records for their home."
+description: Manage home data via the cl.haus API. Use for ANY question about the home — rooms, systems (HVAC, water heater, appliances), devices (Z-Wave, Zigbee, WiFi, Matter), consumables (filters, batteries), service records, maintenance history, and photos. Query this skill FIRST when a cl.haus chat message mentions anything about the house, its systems, devices, or maintenance. Supports full CRUD operations.
 ---
 
-# cl.haus API Skill
+# cl.haus — Home Management Skill
 
-Interact with the cl.haus home management API.
+You are this home's intelligence. When conversations arrive through cl.haus, you have full access to the home's structured data — rooms, systems, devices, consumables, service records, photos, and members. **Use it proactively.** Don't wait to be asked to look things up; if a conversation touches on anything the home might know, query the API.
+
+## When to Use This Skill
+
+**Always query when:**
+- Someone mentions a system, appliance, device, or room by name → look it up, include details
+- Someone asks about maintenance, filters, or service history → check consumables and service records
+- Someone sends a photo of equipment/labels → upload to gallery, extract details, update the system record
+- Someone asks "what's in the house" / "what do we have" → list rooms, systems, devices, or photos
+- Someone mentions a repair, service visit, or installation → create a service record
+- You learn new information about a system (model number, install date, specs) → update the system record
+- Someone asks about smart home devices, sensors, switches, locks → query devices
+
+**Create data when:**
+- A homeowner describes a room that doesn't exist yet → offer to add it
+- A new appliance or system is mentioned → offer to track it
+- A new smart device is being added → create a device record with protocol and status
+- A service visit happened → log it as a service record
+- A filter was changed or needs changing → update consumables
+
+**Don't over-query:** The home context injected with each message already includes a snapshot of rooms, systems, and members. Use that for basic awareness. Query the API when you need details (service history, consumable specs, photo URLs, device status) or need to create/update records.
 
 ## Authentication
 
-All API requests require authentication via one of:
-- **API Key**: `Authorization: Bearer clk_...` or `X-API-Key: clk_...`
-- **JWT Token**: `Authorization: Bearer <jwt>` (for user sessions)
-
-API keys are scoped to a single home. Set these env vars:
-- `CLHAUS_API_KEY` — your API key (starts with `clk_`)
-- `CLHAUS_HOME_ID` — the home UUID the key is scoped to
+Environment variables (pre-configured):
+- `CLHAUS_API_KEY` — home-scoped API key (`clk_` prefix)
+- `CLHAUS_HOME_ID` — home UUID
 - `CLHAUS_API_URL` — base URL (default: `https://cl.haus`)
-
-## Available Endpoints
-
-### Identity
-- `GET /api/whoami` — check who you're authenticated as
-
-### Homes (JWT only, not API keys)
-- `GET /api/homes` — list homes
-- `POST /api/homes` — create home `{ name, subdomain }`
-- `GET /api/homes/:homeId` — get home details
-- `DELETE /api/homes/:homeId` — delete home
-
-### Rooms
-- `GET /api/homes/:homeId/rooms` — list rooms
-- `POST /api/homes/:homeId/rooms` — create room `{ name, floor? }`
-- `GET /api/homes/:homeId/rooms/:id` — get room
-- `PATCH /api/homes/:homeId/rooms/:id` — update room
-- `DELETE /api/homes/:homeId/rooms/:id` — delete room
-
-### Systems (Home-Level)
-- `GET /api/homes/:homeId/systems` — list all systems for home
-- `POST /api/homes/:homeId/systems` — create system `{ name, type?, manufacturer?, model?, serialNumber?, roomId?, installDate?, notes? }`
-- `GET /api/homes/:homeId/systems/:id` — get system
-- `PUT /api/homes/:homeId/systems/:id` — update system (partial)
-- `DELETE /api/homes/:homeId/systems/:id` — delete system
-
-### Systems (Room-Nested)
-- `GET /api/homes/:homeId/rooms/:roomId/systems` — list systems in room
-- `POST /api/homes/:homeId/rooms/:roomId/systems` — create system in room
-
-### Consumables
-- `GET /api/homes/:homeId/consumables` — list consumables
-- `POST /api/homes/:homeId/consumables` — create consumable
-- `PATCH /api/homes/:homeId/consumables/:id` — update consumable
-- `DELETE /api/homes/:homeId/consumables/:id` — delete consumable
-
-### Service Records
-- `GET /api/homes/:homeId/service-records` — list records
-- `POST /api/homes/:homeId/service-records` — create record
-- `DELETE /api/homes/:homeId/service-records/:id` — delete record
-
-### Photos
-- `GET /api/homes/:homeId/photos` — list photos (returns signed URLs)
-- `POST /api/homes/:homeId/photos` — upload photo (multipart/form-data)
-- `GET /api/homes/:homeId/photos/:id` — get single photo with signed URL
-- `DELETE /api/homes/:homeId/photos/:id` — delete photo
-
-## Example Workflows
-
-### Upload a photo
-```bash
-curl -X POST "${CLHAUS_API_URL}/api/homes/${CLHAUS_HOME_ID}/photos" \
-  -H "Authorization: Bearer ${CLHAUS_API_KEY}" \
-  -F "file=@photo.jpg" \
-  -F "caption=Kitchen renovation"
-```
-
-### Add a room
-```bash
-curl -X POST "${CLHAUS_API_URL}/api/homes/${CLHAUS_HOME_ID}/rooms" \
-  -H "Authorization: Bearer ${CLHAUS_API_KEY}" \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Kitchen", "floor": 1}'
-```
-
-### List systems
-```bash
-curl "${CLHAUS_API_URL}/api/homes/${CLHAUS_HOME_ID}/systems" \
-  -H "Authorization: Bearer ${CLHAUS_API_KEY}"
-```
 
 ## Bash Helper
 
-Use `packages/skill/scripts/clhaus-api.sh` for common operations:
+Source the helper for common operations:
 
 ```bash
-source packages/skill/scripts/clhaus-api.sh
-clhaus upload-photo photo.jpg "Kitchen renovation"
-clhaus list-photos
-clhaus add-room "Kitchen" 1
+source /path/to/skill/scripts/clhaus-api.sh
+
+# Rooms
 clhaus list-rooms
-clhaus add-system "HVAC" "hvac"
-clhaus get-system <id>
-clhaus update-system <id> '{"serialNumber": "SN-123"}'
-clhaus delete-system <id>
+clhaus add-room "Kitchen" 1          # name, optional floor
+clhaus get-room <roomId>
+clhaus delete-room <roomId>
+
+# Systems
 clhaus list-systems
+clhaus add-system "HVAC" "hvac"      # name, optional type, optional roomId
+clhaus get-system <id>
+clhaus update-system <id> '<json>'
+clhaus delete-system <id>
+
+# Devices
+clhaus list-devices                   # list all devices
+clhaus list-devices paired            # filter by status: pending, provisioned, pairing, paired, failed, excluded
+clhaus add-device "Front Door Lock" zwave --manufacturer Yale --model "Assure 2" --room <roomId> --system <systemId> --dsk <dsk>
+clhaus get-device <deviceId>
+clhaus update-device <deviceId> '<json>'
+clhaus delete-device <deviceId>
+
+# Photos
+clhaus list-photos
+clhaus upload-photo photo.jpg "Kitchen renovation"
+
+# Identity
+clhaus whoami
 ```
 
-## Notes
-- Photo uploads accept: JPEG, PNG, WebP, HEIC/HEIF (max 10MB)
-- Signed URLs expire after 1 hour
-- API keys cannot access account-level routes (homes list, API key management)
+## REST API Reference
+
+All endpoints are under `${CLHAUS_API_URL}/api/homes/${CLHAUS_HOME_ID}`. Auth header: `Authorization: Bearer ${CLHAUS_API_KEY}`.
+
+### Rooms
+| Method | Path | Body | Notes |
+|--------|------|------|-------|
+| `GET` | `/rooms` | — | List all rooms |
+| `POST` | `/rooms` | `{ name, floor? }` | Create room |
+| `GET` | `/rooms/:id` | — | Get room details |
+| `PATCH` | `/rooms/:id` | `{ name?, floor? }` | Update room |
+| `DELETE` | `/rooms/:id` | — | Delete room |
+
+### Systems
+| Method | Path | Body | Notes |
+|--------|------|------|-------|
+| `GET` | `/systems` | — | List all systems |
+| `POST` | `/systems` | `{ name, type?, manufacturer?, model?, serialNumber?, roomId?, installDate?, notes? }` | Create system |
+| `GET` | `/systems/:id` | — | Get system details |
+| `PUT` | `/systems/:id` | Partial fields | Update system |
+| `DELETE` | `/systems/:id` | — | Delete system |
+| `GET` | `/rooms/:roomId/systems` | — | List systems in a room |
+| `POST` | `/rooms/:roomId/systems` | Same as above | Create system in room |
+
+### Devices
+| Method | Path | Body | Notes |
+|--------|------|------|-------|
+| `GET` | `/devices` | — | List all devices. Optional query param: status |
+| `POST` | `/devices` | `{ name, protocol, manufacturer?, model?, dsk?, roomId?, systemId?, notes? }` | Create device. Protocol: zwave, zigbee, wifi, matter |
+| `GET` | `/devices/:id` | — | Get device details |
+| `PUT` | `/devices/:id` | Partial fields | Update device. Status changes follow a state machine. |
+| `DELETE` | `/devices/:id` | — | Delete device |
+| `GET` | `/rooms/:roomId/devices` | — | List devices in a room |
+
+#### Device Status State Machine
+Devices have a status that follows allowed transitions:
+- pending → provisioned, pairing, or failed
+- provisioned → pairing or failed
+- pairing → paired or failed
+- paired → excluded
+- excluded → provisioned (re-pair path)
+- failed → provisioned or pairing (recovery)
+
+When a device transitions to paired, pairedAt is automatically set.
+
+### Consumables
+| Method | Path | Body | Notes |
+|--------|------|------|-------|
+| `GET` | `/consumables` | — | List consumables |
+| `POST` | `/consumables` | `{ name, systemId?, spec?, lastReplacedAt?, intervalDays? }` | Create consumable |
+| `PATCH` | `/consumables/:id` | Partial fields | Update consumable |
+| `DELETE` | `/consumables/:id` | — | Delete consumable |
+
+### Service Records
+| Method | Path | Body | Notes |
+|--------|------|------|-------|
+| `GET` | `/service-records` | — | List all service records |
+| `POST` | `/service-records` | `{ systemId?, description, serviceDate?, provider?, cost?, notes? }` | Create record |
+| `DELETE` | `/service-records/:id` | — | Delete record |
+
+### Photos
+| Method | Path | Body | Notes |
+|--------|------|------|-------|
+| `GET` | `/photos` | — | List photos (returns signed URLs, expire in 1h) |
+| `POST` | `/photos` | Multipart: `file` + optional `caption`, `roomId`, `systemId` | Upload photo (JPEG/PNG/WebP/HEIC, max 10MB) |
+| `GET` | `/photos/:id` | — | Get photo with signed URL |
+| `DELETE` | `/photos/:id` | — | Delete photo |
+
+### Members
+| Method | Path | Notes |
+|--------|------|-------|
+| `GET` | `/members` | List home members with roles |
+
+### Identity
+| Method | Path | Notes |
+|--------|------|-------|
+| `GET` | `/api/whoami` | Check authentication (full path, not home-scoped) |
+
+## Patterns & Tips
+
+- **Photo-first documentation:** When someone sends a photo of a water heater label, HVAC unit, or paint can, extract the model/serial/specs and update (or create) the corresponding system record. Then upload the photo linked to that system.
+- **Consumable tracking:** Filters, batteries, bulbs — anything that gets replaced on a schedule. Track the spec (e.g., "20x25x1"), last replacement date, and interval. Proactively remind when one is due.
+- **Service records as institutional memory:** Every tech visit, every repair, every maintenance task should be logged. Include the provider name, cost, and notes. This builds the home's history over time.
+- **Room-system relationships:** Systems belong to rooms. When creating a system, associate it with the right room. This enables queries like "what systems are in the basement?"
+- **Device lifecycle:** New devices start as pending. Track them through provisioning, pairing, and into paired status. If something goes wrong, mark as failed and retry. Devices can be associated with both a room and a system.
