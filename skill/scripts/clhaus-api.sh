@@ -99,6 +99,64 @@ clhaus() {
       _clhaus_check || return 1
       _clhaus_curl "${CLHAUS_API_URL}/api/homes/${CLHAUS_HOME_ID}/systems"
       ;;
+    add-device)
+      _clhaus_check || return 1
+      local name="${1:?Usage: clhaus add-device <name> <protocol> [--dsk <dsk>] [--room <roomId>] [--system <systemId>] [--manufacturer <mfg>] [--model <model>]}"
+      local protocol="${2:?Usage: clhaus add-device <name> <protocol> ...}"
+      shift 2
+      local dsk="" roomId="" systemId="" manufacturer="" model=""
+      while [[ $# -gt 0 ]]; do
+        case "$1" in
+          --dsk) dsk="$2"; shift 2 ;;
+          --room) roomId="$2"; shift 2 ;;
+          --system) systemId="$2"; shift 2 ;;
+          --manufacturer) manufacturer="$2"; shift 2 ;;
+          --model) model="$2"; shift 2 ;;
+          *) echo "{\"error\": \"Unknown option: $1\"}" >&2; return 1 ;;
+        esac
+      done
+      local body
+      body=$(jq -n \
+        --arg name "$name" \
+        --arg protocol "$protocol" \
+        --arg dsk "$dsk" \
+        --arg roomId "$roomId" \
+        --arg systemId "$systemId" \
+        --arg manufacturer "$manufacturer" \
+        --arg model "$model" \
+        '{name: $name, protocol: $protocol}
+        + (if ($dsk | length) > 0 then {dsk: $dsk} else {} end)
+        + (if ($roomId | length) > 0 then {roomId: $roomId} else {} end)
+        + (if ($systemId | length) > 0 then {systemId: $systemId} else {} end)
+        + (if ($manufacturer | length) > 0 then {manufacturer: $manufacturer} else {} end)
+        + (if ($model | length) > 0 then {model: $model} else {} end)')
+      _clhaus_curl -X POST "${CLHAUS_API_URL}/api/homes/${CLHAUS_HOME_ID}/devices" \
+        -H "Content-Type: application/json" -d "$body"
+      ;;
+    list-devices)
+      _clhaus_check || return 1
+      local status_filter="${1:-}"
+      local url="${CLHAUS_API_URL}/api/homes/${CLHAUS_HOME_ID}/devices"
+      [[ -n "$status_filter" ]] && url="${url}?status=${status_filter}"
+      _clhaus_curl "$url"
+      ;;
+    get-device)
+      _clhaus_check || return 1
+      local id="${1:?Usage: clhaus get-device <deviceId>}"
+      _clhaus_curl "${CLHAUS_API_URL}/api/homes/${CLHAUS_HOME_ID}/devices/${id}"
+      ;;
+    update-device)
+      _clhaus_check || return 1
+      local id="${1:?Usage: clhaus update-device <deviceId> <json>}"
+      local json="${2:?Usage: clhaus update-device <deviceId> <json>}"
+      _clhaus_curl -X PUT "${CLHAUS_API_URL}/api/homes/${CLHAUS_HOME_ID}/devices/${id}" \
+        -H "Content-Type: application/json" -d "$json"
+      ;;
+    delete-device)
+      _clhaus_check || return 1
+      local id="${1:?Usage: clhaus delete-device <deviceId>}"
+      _clhaus_curl -X DELETE "${CLHAUS_API_URL}/api/homes/${CLHAUS_HOME_ID}/devices/${id}"
+      ;;
     whoami)
       [[ -z "${CLHAUS_API_KEY:-}" ]] && { echo '{"error": "CLHAUS_API_KEY not set"}' >&2; return 1; }
       _clhaus_curl "${CLHAUS_API_URL}/api/whoami"
@@ -119,6 +177,11 @@ Commands:
   update-system <id> <json>           Update a system
   delete-system <id>                  Delete a system
   list-systems                        List systems
+  add-device <name> <protocol> [opts] Create a device (--dsk, --room, --system, --manufacturer, --model)
+  list-devices [status]               List devices (optional status filter)
+  get-device <deviceId>               Get a device
+  update-device <deviceId> <json>     Update a device
+  delete-device <deviceId>            Delete a device
   whoami                              Check authentication
 
 Env: CLHAUS_API_KEY, CLHAUS_API_URL (default: https://cl.haus), CLHAUS_HOME_ID
