@@ -135,7 +135,7 @@ async function wsCommand(type, params = {}) {
 
 // ── Z-Wave helpers ──────────────────────────────────────
 
-const STATUS_NAMES = { 0: "unknown", 1: "asleep", 4: "alive" };
+const STATUS_NAMES = { 0: "unknown", 1: "asleep", 2: "dead", 3: "awake", 4: "alive" };
 
 async function getZwaveEntryId() {
   if (process.env.HA_ZWAVE_ENTRY_ID) return process.env.HA_ZWAVE_ENTRY_ID;
